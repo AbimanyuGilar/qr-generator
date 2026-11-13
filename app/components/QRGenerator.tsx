@@ -6,7 +6,11 @@ import { QRCodeCanvas } from 'qrcode.react'
 const BG = '#F4F1EC'
 const FG = '#1C1917'
 
-export default function QRGenerator() {
+interface Props {
+  onBack: () => void
+}
+
+export default function QRGenerator({ onBack }: Props) {
   const [text, setText] = useState('')
   const canvasRef = useRef<HTMLDivElement>(null)
   const hasValue = text.trim().length > 0
@@ -22,29 +26,35 @@ export default function QRGenerator() {
   }, [])
 
   return (
-    <div
-      style={{ borderColor: FG }}
-      className="w-full max-w-[380px] border"
-    >
+    <div style={{ borderColor: FG }} className="w-full max-w-[380px] border">
       {/* Header */}
       <div
         style={{ background: FG, borderColor: FG }}
         className="border-b px-6 py-5 flex items-center justify-between"
       >
         <span style={{ color: BG }} className="text-xs font-medium tracking-[0.18em] uppercase">
-          QR Generator
+          Generate QR
         </span>
-        {hasValue && (
-          <span style={{ color: BG }} className="text-xs opacity-50 tracking-wide">
-            {text.trim().length} karakter
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {hasValue && (
+            <span style={{ color: BG }} className="text-xs opacity-50 tracking-wide">
+              {text.trim().length} karakter
+            </span>
+          )}
+          <button
+            onClick={onBack}
+            style={{ color: BG }}
+            className="text-xs opacity-50 hover:opacity-100 transition-opacity tracking-wide"
+          >
+            Kembali
+          </button>
+        </div>
       </div>
 
       {/* Input area */}
       <div style={{ borderColor: FG }} className="border-b">
         <textarea
-          className="w-full resize-none px-6 py-5 text-sm leading-relaxed outline-none placeholder-opacity-30"
+          className="w-full resize-none px-6 py-5 text-sm leading-relaxed outline-none"
           style={{
             background: 'transparent',
             color: FG,
