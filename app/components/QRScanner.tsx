@@ -10,11 +10,12 @@ interface Props {
   onBack: () => void
 }
 
-type ScanState = 'idle' | 'scanning' | 'result' | 'denied'
+type ScanState = 'idle' | 'scanning' | 'result' | 'denied' | 'no_qr'
 
 export default function QRScanner({ onBack }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const rafRef = useRef<number>(0)
   const streamRef = useRef<MediaStream | null>(null)
 
@@ -86,6 +87,7 @@ export default function QRScanner({ onBack }: Props) {
     setResult('')
     setCopied(false)
     setState('idle')
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   const copy = () => {
@@ -93,6 +95,41 @@ export default function QRScanner({ onBack }: Props) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return
+
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height)
+
+      URL.revokeObjectURL(url)
+
+      if (code) {
+        setResult(code.data)
+        setState('result')
+      } else {
+        setState('no_qr')
+        if (fileRef.current) fileRef.current.value = ''
+      }
+    }
+
+    img.src = url
   }
 
   return (
@@ -115,17 +152,40 @@ export default function QRScanner({ onBack }: Props) {
       </div>
 
       {/* Idle */}
-      {state === 'idle' && (
-        <button
-          onClick={startCamera}
-          style={{ borderColor: FG, color: FG, background: BG }}
-          className="w-full px-6 py-10 text-left border-b"
-        >
-          <div className="text-sm font-medium tracking-wide">Buka kamera</div>
-          <div className="text-xs opacity-40 mt-1 tracking-wide">
-            Arahkan ke QR code
-          </div>
-        </button>
+      {(state === 'idle' || state === 'no_qr') && (
+        <>
+          {state === 'no_qr' && (
+            <div style={{ borderColor: FG, color: FG }} className="border-b px-6 py-4">
+              <span className="text-xs opacity-50 tracking-wide">QR code tidak ditemukan dalam gambar</span>
+            </div>
+          )}
+
+          <button
+            onClick={startCamera}
+            style={{ borderColor: FG, color: FG, background: BG }}
+            className="w-full border-b px-6 py-7 text-left"
+          >
+            <div className="text-sm font-medium tracking-wide">Kamera</div>
+            <div className="text-xs opacity-40 mt-1 tracking-wide">Arahkan ke QR code</div>
+          </button>
+
+          <button
+            onClick={() => fileRef.current?.click()}
+            style={{ color: FG, background: BG }}
+            className="w-full px-6 py-7 text-left"
+          >
+            <div className="text-sm font-medium tracking-wide">Upload gambar</div>
+            <div className="text-xs opacity-40 mt-1 tracking-wide">JPG, PNG, atau WebP</div>
+          </button>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+        </>
       )}
 
       {/* Denied */}
@@ -148,30 +208,17 @@ export default function QRScanner({ onBack }: Props) {
               muted
               playsInline
             />
-            {/* Viewfinder corners — purely CSS, no glow */}
             <div className="absolute inset-0 pointer-events-none">
-              <div
-                style={{ borderColor: BG }}
-                className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2"
-              />
-              <div
-                style={{ borderColor: BG }}
-                className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2"
-              />
-              <div
-                style={{ borderColor: BG }}
-                className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2"
-              />
-              <div
-                style={{ borderColor: BG }}
-                className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2"
-              />
+              <div style={{ borderColor: BG }} className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2" />
+              <div style={{ borderColor: BG }} className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2" />
+              <div style={{ borderColor: BG }} className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2" />
+              <div style={{ borderColor: BG }} className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2" />
             </div>
           </div>
 
           <button
             onClick={() => { stopCamera(); reset() }}
-            style={{ color: FG, background: BG, borderColor: FG }}
+            style={{ color: FG, background: BG }}
             className="w-full px-6 py-4 text-xs font-medium tracking-[0.18em] uppercase text-left transition-opacity hover:opacity-50"
           >
             Batalkan
@@ -183,17 +230,14 @@ export default function QRScanner({ onBack }: Props) {
       {state === 'result' && (
         <>
           <div style={{ borderColor: FG }} className="border-b px-6 py-5">
-            <p
-              style={{ color: FG }}
-              className="text-sm leading-relaxed break-all"
-            >
+            <p style={{ color: FG }} className="text-sm leading-relaxed break-all">
               {result}
             </p>
           </div>
 
           <button
             onClick={copy}
-            style={{ color: BG, background: FG, borderColor: FG }}
+            style={{ color: BG, background: FG }}
             className="w-full border-b px-6 py-4 text-xs font-medium tracking-[0.18em] uppercase text-left transition-opacity hover:opacity-70"
           >
             {copied ? 'Tersalin' : 'Salin Teks'}
@@ -209,7 +253,6 @@ export default function QRScanner({ onBack }: Props) {
         </>
       )}
 
-      {/* Hidden canvas for jsQR processing */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   )
