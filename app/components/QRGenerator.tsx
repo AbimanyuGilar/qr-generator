@@ -77,10 +77,11 @@ export default function QRGenerator({ onBack }: Props) {
             <div ref={canvasRef}>
               <QRCodeCanvas
                 value={text.trim()}
-                size={200}
+                size={1000}
                 bgColor={BG}
                 fgColor={FG}
-                level="M"
+                level="Q"
+                style={{ width: '200px', height: '200px' }}
               />
             </div>
           </div>
