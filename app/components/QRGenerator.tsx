@@ -1,0 +1,90 @@
+'use client'
+
+import { useState, useRef, useCallback } from 'react'
+import { QRCodeCanvas } from 'qrcode.react'
+
+const BG = '#F4F1EC'
+const FG = '#1C1917'
+
+export default function QRGenerator() {
+  const [text, setText] = useState('')
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const hasValue = text.trim().length > 0
+
+  const download = useCallback(() => {
+    const canvas = canvasRef.current?.querySelector('canvas')
+    if (!canvas) return
+    const url = canvas.toDataURL('image/png')
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'qrcode.png'
+    a.click()
+  }, [])
+
+  return (
+    <div
+      style={{ borderColor: FG }}
+      className="w-full max-w-[380px] border"
+    >
+      {/* Header */}
+      <div
+        style={{ background: FG, borderColor: FG }}
+        className="border-b px-6 py-5 flex items-center justify-between"
+      >
+        <span style={{ color: BG }} className="text-xs font-medium tracking-[0.18em] uppercase">
+          QR Generator
+        </span>
+        {hasValue && (
+          <span style={{ color: BG }} className="text-xs opacity-50 tracking-wide">
+            {text.trim().length} karakter
+          </span>
+        )}
+      </div>
+
+      {/* Input area */}
+      <div style={{ borderColor: FG }} className="border-b">
+        <textarea
+          className="w-full resize-none px-6 py-5 text-sm leading-relaxed outline-none placeholder-opacity-30"
+          style={{
+            background: 'transparent',
+            color: FG,
+            caretColor: FG,
+          }}
+          rows={5}
+          placeholder="Teks atau URL..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+      </div>
+
+      {/* QR output */}
+      {hasValue && (
+        <>
+          <div
+            style={{ borderColor: FG }}
+            className="border-b flex items-center justify-center py-10"
+          >
+            <div ref={canvasRef}>
+              <QRCodeCanvas
+                value={text.trim()}
+                size={200}
+                bgColor={BG}
+                fgColor={FG}
+                level="M"
+              />
+            </div>
+          </div>
+
+          {/* Download */}
+          <button
+            onClick={download}
+            className="w-full px-6 py-4 text-xs font-medium tracking-[0.18em] uppercase text-left transition-opacity hover:opacity-70"
+            style={{ color: BG, background: FG }}
+          >
+            Unduh PNG
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
