@@ -1,18 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import jsQR from 'jsqr'
 
 const BG = '#F4F1EC'
 const FG = '#1C1917'
 
-interface Props {
-  onBack: () => void
-}
-
 type ScanState = 'idle' | 'scanning' | 'result' | 'denied' | 'no_qr'
 
-export default function QRScanner({ onBack }: Props) {
+export default function QRScanner() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -142,16 +139,17 @@ export default function QRScanner({ onBack }: Props) {
         <span style={{ color: BG }} className="text-xs font-medium tracking-[0.18em] uppercase">
           Scan QR
         </span>
-        <button
-          onClick={() => { stopCamera(); onBack() }}
+        <Link
+          href="/"
+          onClick={stopCamera}
           style={{ color: BG }}
           className="text-xs opacity-50 hover:opacity-100 transition-opacity tracking-wide"
         >
           Kembali
-        </button>
+        </Link>
       </div>
 
-      {/* Idle */}
+      {/* Idle / no_qr */}
       {(state === 'idle' || state === 'no_qr') && (
         <>
           {state === 'no_qr' && (
@@ -192,9 +190,7 @@ export default function QRScanner({ onBack }: Props) {
       {state === 'denied' && (
         <div style={{ color: FG }} className="px-6 py-10">
           <div className="text-sm font-medium tracking-wide">Akses kamera ditolak</div>
-          <div className="text-xs opacity-40 mt-1 tracking-wide">
-            Izinkan kamera di pengaturan browser
-          </div>
+          <div className="text-xs opacity-40 mt-1 tracking-wide">Izinkan kamera di pengaturan browser</div>
         </div>
       )}
 
@@ -202,12 +198,7 @@ export default function QRScanner({ onBack }: Props) {
       {state === 'scanning' && (
         <>
           <div style={{ borderColor: FG, aspectRatio: '1' }} className="border-b relative overflow-hidden">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              muted
-              playsInline
-            />
+            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
             <div className="absolute inset-0 pointer-events-none">
               <div style={{ borderColor: BG }} className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2" />
               <div style={{ borderColor: BG }} className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2" />

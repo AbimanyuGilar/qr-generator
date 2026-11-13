@@ -1,16 +1,13 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { QRCodeCanvas } from 'qrcode.react'
 
 const BG = '#F4F1EC'
 const FG = '#1C1917'
 
-interface Props {
-  onBack: () => void
-}
-
-export default function QRGenerator({ onBack }: Props) {
+export default function QRGenerator() {
   const [text, setText] = useState('')
   const canvasRef = useRef<HTMLDivElement>(null)
   const hasValue = text.trim().length > 0
@@ -41,13 +38,13 @@ export default function QRGenerator({ onBack }: Props) {
               {text.trim().length} karakter
             </span>
           )}
-          <button
-            onClick={onBack}
+          <Link
+            href="/"
             style={{ color: BG }}
             className="text-xs opacity-50 hover:opacity-100 transition-opacity tracking-wide"
           >
             Kembali
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -55,11 +52,7 @@ export default function QRGenerator({ onBack }: Props) {
       <div style={{ borderColor: FG }} className="border-b">
         <textarea
           className="w-full resize-none px-6 py-5 text-sm leading-relaxed outline-none"
-          style={{
-            background: 'transparent',
-            color: FG,
-            caretColor: FG,
-          }}
+          style={{ background: 'transparent', color: FG, caretColor: FG }}
           rows={5}
           placeholder="Teks atau URL..."
           value={text}
@@ -70,10 +63,7 @@ export default function QRGenerator({ onBack }: Props) {
       {/* QR output */}
       {hasValue && (
         <>
-          <div
-            style={{ borderColor: FG }}
-            className="border-b flex items-center justify-center py-10"
-          >
+          <div style={{ borderColor: FG }} className="border-b flex items-center justify-center py-10">
             <div ref={canvasRef}>
               <QRCodeCanvas
                 value={text.trim()}
@@ -86,7 +76,6 @@ export default function QRGenerator({ onBack }: Props) {
             </div>
           </div>
 
-          {/* Download */}
           <button
             onClick={download}
             className="w-full px-6 py-4 text-xs font-medium tracking-[0.18em] uppercase text-left transition-opacity hover:opacity-70"
